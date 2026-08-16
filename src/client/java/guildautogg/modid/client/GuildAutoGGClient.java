@@ -25,7 +25,7 @@ public class GuildAutoGGClient implements ClientModInitializer {
 
     private void handleMessage(String text) {
         // Check if the overall message contains "Guild >" and "!"
-        if (text.contains("Guild >") && (text.contains("\uE01A Magic Find)") || text.contains("➜"))) {
+        if (text.contains("Guild >") && (text.contains("➜") || (text.contains("!") && text.contains("(+")) || (text.contains("WOW!") && text.contains("Dye")))) {
 
             // 1. Length Check
             // Find the colon that separates the player's name from their message
