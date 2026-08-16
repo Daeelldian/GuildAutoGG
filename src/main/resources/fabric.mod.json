@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "guildautogg",
+	"version": "${version}",
+	"name": "GuildAutoGG",
+	"description": "Mod that writes gg in guild chat after it detects a flex message",
+	"authors": [
+		"Daeelldian"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/Daeelldian/GuildAutoGG"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/guildautogg/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"guildautogg.modid.GuildAutoGG"
+		],
+		"client": [
+			"guildautogg.modid.client.GuildAutoGGClient"
+		]
+	},
+	"mixins": [
+		"guildautogg.mixins.json",
+		{
+			"config": "guildautogg.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
