@@ -4,77 +4,131 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.Minecraft;
 
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.GsonConfigSerializer;
+
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class GuildAutoGGClient implements ClientModInitializer {
 
-    // Variables to track our cooldown and the last word used
     private long lastTriggerTime = 0;
     private String lastWord = "";
 
-    // The pool of responses
     private final String[] GG_WORDS = {"gg", "ggs", "w", "nice"};
     private final Random random = new Random();
 
+    private static final String[][] TRIGGER_RULES = {
+            {"➜"},
+            {"!", "(+"},
+            {"WOW!", "Dye"},
+            {"TROPHY", "You caught"},
+            {"OFFER ACCEPTED", ","},
+            {"[SkyHanni]", "("},
+            {"You Supercrafted", "!"},
+            {"➡"},
+            {"EXPORTATION"}
+    };
+
     @Override
     public void onInitializeClient() {
-        ClientReceiveMessageEvents.GAME.register((message, _) -> handleMessage(message.getString()));
+        AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
 
-        ClientReceiveMessageEvents.CHAT.register((message, _, _, _, _) -> handleMessage(message.getString()));
+        // Fixed: Removed the { } brackets to use expression lambdas
+        ClientReceiveMessageEvents.GAME.register((message, overlay) ->
+                handleMessage(message.getString())
+        );
+
+        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) ->
+                handleMessage(message.getString())
+        );
     }
 
     private void handleMessage(String text) {
-        // Check if the overall message contains "Guild >" and "!"
-        if (text.contains("Guild >") && (text.contains("➜") || (text.contains("!") && text.contains("(+")) || (text.contains("WOW!") && text.contains("Dye")))) {
+        if (!isGGTrigger(text)) {
+            return;
+        }
 
-            // 1. Length Check
-            // Find the colon that separates the player's name from their message
-            int colonIndex = text.indexOf(":");
-            if (colonIndex != -1) {
-                // Extract the message after the colon and trim leading/trailing spaces
-                String actualMessage = text.substring(colonIndex + 1).trim();
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null) {
+            return;
+        }
 
-                // If the player's actual message is shorter than 11 characters, ignore it
-                if (actualMessage.length() < 11) {
-                    return;
-                }
-            } else {
-                // If we somehow can't find a colon, abort to be safe
+        int colonIndex = text.indexOf(":");
+        if (colonIndex != -1) {
+            String senderInfo = text.substring(0, colonIndex);
+            String myName = client.player.getName().getString();
+
+            if (senderInfo.contains(myName)) {
                 return;
             }
 
-            // 2. Cooldown Check
-            // Ensure 4000 milliseconds (4 seconds) have passed since the last trigger
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastTriggerTime < 4000) {
+            String actualMessage = text.substring(colonIndex + 1).trim();
+            if (actualMessage.length() < 11) {
                 return;
             }
+        } else {
+            return;
+        }
 
-            // 3. Select the Response
-            String messageToSend;
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastTriggerTime < 4000) {
+            return;
+        }
 
-            // 0.1% chance (1 in 1000) to be unimpressed
-            if (random.nextInt(1000) == 0) {
-                messageToSend = "Not that impressive";
+        String messageToSend;
+        if (random.nextInt(1000) == 0) {
+            messageToSend = "Not that impressive";
+        } else {
+            String chosenWord;
+            do {
+                chosenWord = GG_WORDS[random.nextInt(GG_WORDS.length)];
+            } while (chosenWord.equals(lastWord));
+
+            lastWord = chosenWord;
+            messageToSend = chosenWord;
+        }
+
+        // Fixed: Stored the connection in a 'var' to satisfy the NullPointerException warning
+        var connection = client.getConnection();
+        if (connection != null) {
+            lastTriggerTime = currentTime;
+
+            ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+
+            if (config.delayResponse && config.delayAmount > 0) {
+                // Fixed: Replaced the background statement lambda with an expression lambda
+                CompletableFuture.runAsync(() ->
+                                client.execute(() -> {
+                                    var delayedConnection = client.getConnection();
+                                    if (delayedConnection != null) {
+                                        delayedConnection.sendCommand("gc " + messageToSend);
+                                    }
+                                })
+                        , CompletableFuture.delayedExecutor(config.delayAmount, TimeUnit.SECONDS));
             } else {
-                // Pick a random word from the pool until we get one that isn't the last used word
-                String chosenWord;
-                do {
-                    chosenWord = GG_WORDS[random.nextInt(GG_WORDS.length)];
-                } while (chosenWord.equals(lastWord));
-
-                lastWord = chosenWord; // Save the word so it can't be used next time
-                messageToSend = chosenWord;
-            }
-
-            // 4. Send the Command
-            Minecraft client = Minecraft.getInstance();
-            if (client.getConnection() != null) {
-                client.getConnection().sendCommand("gc " + messageToSend);
-
-                // Update the cooldown timer only after a successful message is sent
-                lastTriggerTime = currentTime;
+                connection.sendCommand("gc " + messageToSend);
             }
         }
+    }
+
+    private boolean isGGTrigger(String text) {
+        if (!text.contains("Guild >")) {
+            return false;
+        }
+        for (String[] ruleSet : TRIGGER_RULES) {
+            boolean allKeywordsMatch = true;
+            for (String keyword : ruleSet) {
+                if (!text.contains(keyword)) {
+                    allKeywordsMatch = false;
+                    break;
+                }
+            }
+            if (allKeywordsMatch) {
+                return true;
+            }
+        }
+        return false;
     }
 }

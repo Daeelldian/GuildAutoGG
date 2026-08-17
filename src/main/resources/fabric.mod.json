@@ -20,6 +20,9 @@
 		],
 		"client": [
 			"guildautogg.modid.client.GuildAutoGGClient"
+		],
+		"modmenu": [
+			"guildautogg.modid.client.ModMenuIntegration"
 		]
 	},
 	"mixins": [
