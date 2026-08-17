@@ -25,10 +25,12 @@ public class GuildAutoGGClient implements ClientModInitializer {
             {"WOW!", "Dye"},
             {"TROPHY", "You caught"},
             {"OFFER ACCEPTED", ","},
-            {"[SkyHanni]", "("},
+            {"[SkyHanni]"},
             {"You Supercrafted", "!"},
             {"➡"},
-            {"EXPORTATION"}
+            {"EXPORTATION"},
+            {"UPGRADE!","to"},
+            {"SHINING!","caught their first"}
     };
 
     @Override
