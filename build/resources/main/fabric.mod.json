@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "guildautogg",
+	"version": "1.3.1",
+	"name": "GuildAutoGG",
+	"description": "GG your homies in guildchat with no effort!",
+	"authors": [
+		"Daeelldian"
+	],
+	"contact": {
+		"homepage": "https://github.com/Daeelldian/GuildAutoGG",
+		"sources": "https://github.com/Daeelldian/GuildAutoGG"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/guildautogg/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"guildautogg.modid.GuildAutoGG"
+		],
+		"client": [
+			"guildautogg.modid.client.GuildAutoGGClient"
+		],
+		"modmenu": [
+			"guildautogg.modid.client.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"guildautogg.mixins.json",
+		{
+			"config": "guildautogg.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
