@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "guildautogg",
-	"version": "1.3.1",
+	"version": "1.3.3",
 	"name": "GuildAutoGG",
 	"description": "GG your homies in guildchat with no effort!",
 	"authors": [
